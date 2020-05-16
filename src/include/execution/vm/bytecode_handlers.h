@@ -703,13 +703,13 @@ GEN_SQL_COMPARISONS(DateVal)
 GEN_SQL_COMPARISONS(TimestampVal)
 #undef GEN_SQL_COMPARISONS
 
-void OpLikeStringVal(terrier::execution::sql::BoolVal *const result,
+VM_OP_HOT void OpLikeStringVal(terrier::execution::sql::BoolVal *const result,
                      const terrier::execution::sql::StringVal *const left,
                      const terrier::execution::sql::StringVal *const right) {
   terrier::execution::sql::ComparisonFunctions::LikeStringVal(result, *left, *right);
 }
 
-void OpNotLikeStringVal(terrier::execution::sql::BoolVal *const result,
+VM_OP_HOT void OpNotLikeStringVal(terrier::execution::sql::BoolVal *const result,
                         const terrier::execution::sql::StringVal *const left,
                         const terrier::execution::sql::StringVal *const right) {
   terrier::execution::sql::ComparisonFunctions::NotLikeStringVal(result, *left, *right);
