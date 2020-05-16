@@ -2693,6 +2693,16 @@ void BytecodeGenerator::VisitSqlCompareOpExpr(ast::ComparisonOpExpr *compare) {
       COMPARISON_BYTECODE(code, NotEqual, builtin_kind);
       break;
     }
+    case parsing::Token::Type::LIKE: {
+      TERRIER_ASSERT(builtin_kind == ast::BuiltinType::Kind::StringVal, "argument should be of type string");
+      code = Bytecode::LikeStringVal;
+      break;
+    }
+    case parsing::Token::Type::NOT_LIKE: {
+      TERRIER_ASSERT(builtin_kind == ast::BuiltinType::Kind::StringVal, "argument should be of type string");
+      code = Bytecode::NotLikeStringVal;
+      break;
+    }
     default: {
       UNREACHABLE("Impossible binary operation");
     }

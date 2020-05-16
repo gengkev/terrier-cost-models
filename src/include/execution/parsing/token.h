@@ -51,6 +51,8 @@ namespace terrier::execution::parsing {
   T(GREATER_EQUAL, ">=", 6)                        \
   T(LESS, "<", 6)                                  \
   T(LESS_EQUAL, "<=", 6)                           \
+  T(LIKE, "like", 6)                               \
+  T(NOT_LIKE, "notlike", 6)                        \
                                                    \
   /* Identifiers and literals */                   \
   T(IDENTIFIER, "[ident]", 0)                      \
@@ -129,7 +131,7 @@ class Token {
    */
   static bool IsCompareOp(Type op) {
     return (static_cast<uint8_t>(Type::BANG_EQUAL) <= static_cast<uint8_t>(op) &&
-            static_cast<uint8_t>(op) <= static_cast<uint8_t>(Type::LESS_EQUAL));
+            static_cast<uint8_t>(op) <= static_cast<uint8_t>(Type::NOT_LIKE));
   }
 
   /**

@@ -75,6 +75,15 @@ void Sema::VisitComparisonOpExpr(ast::ComparisonOpExpr *node) {
       if (node->Right() != right) node->SetRight(right);
       break;
     }
+    case parsing::Token::Type::LIKE:
+    case parsing::Token::Type::NOT_LIKE: {
+      // NOLINTNEXTLINE
+      auto [result_type, left, right] = CheckLikeOperand(node->Op(), node->Position(), node->Left(), node->Right());
+      node->SetType(result_type);
+      if (node->Left() != left) node->SetLeft(left);
+      if (node->Right() != right) node->SetRight(right);
+      break;
+    }
     default: {
       EXECUTION_LOG_ERROR("{} is not a comparison operation", parsing::Token::GetString(node->Op()));
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <regex>
 
 #include "execution/sql/value.h"
 
@@ -195,6 +196,16 @@ class EXPORT ComparisonFunctions {
   static void NeTimestampVal(BoolVal *result, const TimestampVal &v1, const TimestampVal &v2);
 
   /**
+   * Sets result = (v1 LIKE v2)
+   */
+  static void LikeStringVal(BoolVal *result, const StringVal &v1, const StringVal &v2);
+
+  /**
+   * Sets result = (v1 NOT LIKE v2)
+   */
+  static void NotLikeStringVal(BoolVal *result, const StringVal &v1, const StringVal &v2);
+
+  /**
    * Compare two raw strings. Returns:
    * < 0 if s1 < s2
    * 0 if s1 == s2
@@ -241,6 +252,35 @@ class EXPORT ComparisonFunctions {
     }
     return RawStringCompare(v1.Content(), v1.len_, v2.Content(), v2.len_, min_len);
   }
+
+  /**
+   * Check if a string matches a given pattern.
+   */
+  static bool MatchPattern(const StringVal &v, const StringVal &pattern) {
+    TERRIER_ASSERT(!v.is_null_ && !pattern.is_null_, "Both input strings must not be null");
+    std::string val(v.Content(), v.Content() + v.len_);
+    std::string pat(pattern.Content(), pattern.Content() + pattern.len_);
+
+    std::stringstream ss;
+
+    for (char ch : pat) {
+      if (ch == '%') {
+        ss << ".*";
+      } else if (ch == '_') {
+        ss << '.';
+      } else if (ch == '^' || ch == '$' || ch == '\\' || ch == '.' || ch == '*' || ch == '+' || ch == '?' ||
+                 ch == '(' || ch == ')' || ch == '[' || ch == ']' || ch == '{' || ch == '}' || ch == '|') {
+        ss << '\\' << ch;
+      } else {
+        ss << ch;
+      }
+    }
+
+    const std::regex regex(ss.str());
+    std::smatch match;
+
+    return std::regex_match(val, match, regex);
+  }
 };
 
 // ---------------------------------------------------------
@@ -284,4 +324,21 @@ BINARY_COMPARISON_ALL_TYPES(Ne, !=);
 #undef BINARY_COMPARISON_STRING_FN_HIDE_NULL
 #undef BINARY_COMPARISON_NUMERIC_FN_HIDE_NULL
 #undef BINARY_COMPARISON_DATE_FN_HIDE_NULL
+
+inline void ComparisonFunctions::LikeStringVal(BoolVal *result, const StringVal &v1, const StringVal &v2) {
+  if (v1.is_null_ || v2.is_null_) {
+    *result = BoolVal::Null();
+    return;
+  }
+  *result = BoolVal(MatchPattern(v1, v2));
+}
+
+inline void ComparisonFunctions::NotLikeStringVal(BoolVal *result, const StringVal &v1, const StringVal &v2) {
+  if (v1.is_null_ || v2.is_null_) {
+    *result = BoolVal::Null();
+    return;
+  }
+  *result = BoolVal(!MatchPattern(v1, v2));
+}
+
 }  // namespace terrier::execution::sql

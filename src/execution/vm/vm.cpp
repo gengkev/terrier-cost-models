@@ -927,6 +927,22 @@ void VM::Interpret(const uint8_t *ip, Frame *frame) {
   GEN_CMP(NotEqual);
 #undef GEN_CMP
 
+  OP(LikeStringVal) : {
+    auto *result = frame->LocalAt<sql::BoolVal *>(READ_LOCAL_ID());
+    auto *left = frame->LocalAt<sql::StringVal *>(READ_LOCAL_ID());
+    auto *right = frame->LocalAt<sql::StringVal *>(READ_LOCAL_ID());
+    OpLikeStringVal(result, left, right);
+    DISPATCH_NEXT();
+  }
+
+  OP(NotLikeStringVal) : {
+    auto *result = frame->LocalAt<sql::BoolVal *>(READ_LOCAL_ID());
+    auto *left = frame->LocalAt<sql::StringVal *>(READ_LOCAL_ID());
+    auto *right = frame->LocalAt<sql::StringVal *>(READ_LOCAL_ID());
+    OpNotLikeStringVal(result, left, right);
+    DISPATCH_NEXT();
+  }
+
 #define GEN_UNARY_MATH_OPS(op)                                      \
   OP(op##Integer) : {                                               \
     auto *result = frame->LocalAt<sql::Integer *>(READ_LOCAL_ID()); \
