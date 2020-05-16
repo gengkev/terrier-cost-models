@@ -160,7 +160,43 @@ public class FunctionsTest extends TestUtility {
             }
             assertNoMoreRows(rs);
         }
-     
+
+    private void checkLikeOp(String col_name, String pattern, boolean is_null, Boolean expected) throws SQLException {
+        // Test LIKE
+        {
+           String sql = String.format("SELECT %s LIKE ? AS result FROM data WHERE is_null = ?", col_name);
+           PreparedStatement stmt = conn.prepareStatement(sql);
+           stmt.setString(1, pattern);
+           stmt.setInt(2, is_null ? 1 : 0);
+           ResultSet rs = stmt.executeQuery();
+           boolean exists = rs.next();
+           assert(exists);
+           if (is_null) {
+               checkBooleanRow(rs, new String[]{"result"}, new Boolean[]{null});
+           } else {
+               checkBooleanRow(rs, new String[]{"result"}, new Boolean[]{expected});
+           }
+           assertNoMoreRows(rs);
+        }
+
+        // Test NOT LIKE
+        {
+            String sql = String.format("SELECT %s NOT LIKE ? AS result FROM data WHERE is_null = ?", col_name);
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, pattern);
+            stmt.setInt(2, is_null ? 1 : 0);
+            ResultSet rs = stmt.executeQuery();
+            boolean exists = rs.next();
+            assert(exists);
+            if (is_null) {
+                checkBooleanRow(rs, new String[]{"result"}, new Boolean[]{null});
+            } else {
+                checkBooleanRow(rs, new String[]{"result"}, new Boolean[]{expected == null ? null : !expected});
+            }
+            assertNoMoreRows(rs);
+        }
+    }
+
     /**
      * Tests usage of trig udf functions
      * #744 test
@@ -213,11 +249,63 @@ public class FunctionsTest extends TestUtility {
         checkStringFunc("lower", "str_a_val", false, "abcdef");
         checkStringFunc("lower", "str_a_val", true, null);
     }
+
     @Test
     public void testPosition() throws SQLException {
         checkStringPositionFunc("position", "bC", "str_a_val", false, 2);
         checkStringPositionFunc("position", "bc", "str_a_val", false, 2);
         checkStringPositionFunc("position", "aa", "str_a_val", false, 0);
         checkStringPositionFunc("position", "bC", "str_a_val", true, null);
+    }
+
+    @Test
+    public void testLike() throws SQLException {
+        // Positive: Matches exact string when % and _ aren't used
+        checkLikeOp("str_a_val", "AbCdEf", false, true);
+
+        // Positive: % replaces zero or more characters
+        checkLikeOp("str_a_val", "%", false, true);
+        checkLikeOp("str_a_val", "AbCdEf%", false, true);
+        checkLikeOp("str_a_val", "AbC%dEf", false, true);
+        checkLikeOp("str_a_val", "Ab%", false, true);
+        checkLikeOp("str_a_val", "%Ef", false, true);
+        checkLikeOp("str_a_val", "%d%", false, true);
+        checkLikeOp("str_a_val", "%A%d%E%", false, true);
+
+        // Positive: _ replaces a single character
+        checkLikeOp("str_a_val", "______", false, true);
+        checkLikeOp("str_a_val", "_b____", false, true);
+        checkLikeOp("str_a_val", "AbCd_f", false, true);
+        checkLikeOp("str_a_val", "_bCdEf", false, true);
+        checkLikeOp("str_a_val", "_b_d_f", false, true);
+
+        // Positive: Combination of % and _
+        checkLikeOp("str_a_val", "___%___", false, true);
+        checkLikeOp("str_a_val", "_b%", false, true);
+        checkLikeOp("str_a_val", "%d_f", false, true);
+        checkLikeOp("str_a_val", "%C_E%", false, true);
+
+        // Negative: random tests
+        checkLikeOp("str_a_val", "", false, false);
+        checkLikeOp("str_a_val", "_", false, false);
+        checkLikeOp("str_a_val", "___%____", false, false);
+        checkLikeOp("str_a_val", "AbCdEf_", false, false);
+        checkLikeOp("str_a_val", "AbC", false, false);
+        checkLikeOp("str_a_val", "\"AbCdEf\"", false, false);
+
+        // Negative: LIKE is case sensitive
+        checkLikeOp("str_a_val", "abcdef", false, false);
+        checkLikeOp("str_a_val", "ABCDEF", false, false);
+        checkLikeOp("str_a_val", "%e%", false, false);
+
+        // Negative: Regex characters are escaped
+        checkLikeOp("str_a_val", ".*", false, false);
+        checkLikeOp("str_a_val", "\\D%", false, false);
+        checkLikeOp("str_a_val", "(%)", false, false);
+        checkLikeOp("str_a_val", "AbCd[E]f", false, false);
+
+        // Null
+        checkLikeOp("str_a_val", "abc", true, null);
+        checkLikeOp("str_a_val", "AbCdEf", true, null);
     }
 }

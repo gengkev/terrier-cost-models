@@ -78,7 +78,7 @@ public class TestUtility {
     }
     
     /**
-    * Check a single row of real queried values against expected values
+    * Check a single row of string queried values against expected values
     *
     * @param rs              resultset, with cursor at the desired row
     * @param columns         column names
@@ -88,6 +88,25 @@ public class TestUtility {
         assertEquals(columns.length, expected.length);
         for (int i = 0; i < columns.length; i++) {
             String val = (String)rs.getObject(columns[i]);
+            if (expected[i] == null) {
+                assertEquals(expected[i], val);
+            } else {
+                assertEquals(expected[i], val);
+            }
+        }
+    }
+
+    /**
+    * Check a single row of boolean queried values against expected values
+    *
+    * @param rs              resultset, with cursor at the desired row
+    * @param columns         column names
+    * @param expected expected values of columns
+    */
+    public void checkBooleanRow(ResultSet rs, String[] columns, Boolean[] expected) throws SQLException {
+        assertEquals(columns.length, expected.length);
+        for (int i = 0; i < columns.length; i++) {
+            Boolean val = (Boolean)rs.getObject(columns[i]);
             if (expected[i] == null) {
                 assertEquals(expected[i], val);
             } else {

@@ -60,7 +60,8 @@ class TranslatorFactory {
     return type == parser::ExpressionType::COMPARE_EQUAL || type == parser::ExpressionType::COMPARE_NOT_EQUAL ||
            type == parser::ExpressionType::COMPARE_LESS_THAN || type == parser::ExpressionType::COMPARE_GREATER_THAN ||
            type == parser::ExpressionType::COMPARE_LESS_THAN_OR_EQUAL_TO ||
-           type == parser::ExpressionType::COMPARE_GREATER_THAN_OR_EQUAL_TO;
+           type == parser::ExpressionType::COMPARE_GREATER_THAN_OR_EQUAL_TO ||
+           type == parser::ExpressionType::COMPARE_LIKE || type == parser::ExpressionType::COMPARE_NOT_LIKE;
   }
 
   /**
