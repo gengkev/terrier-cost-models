@@ -246,6 +246,32 @@ Sema::CheckResult Sema::CheckComparisonOperands(parsing::Token::Type op, const S
   return {nullptr, left, right};
 }
 
+Sema::CheckResult Sema::CheckLikeOperand(terrier::execution::parsing::Token::Type op,
+                                         const terrier::execution::SourcePosition &pos,
+                                         terrier::execution::ast::Expr *left, terrier::execution::ast::Expr *right) {
+  auto *resolved_type_left = Resolve(left);
+  auto *resolved_type_right = Resolve(right);
+
+  if (resolved_type_left == nullptr || resolved_type_right == nullptr) {
+    return {nullptr, left, right};
+  }
+
+  if (!resolved_type_left->IsSpecificBuiltin(ast::BuiltinType::StringVal) ||
+      !resolved_type_right->IsSpecificBuiltin(ast::BuiltinType::StringVal)) {
+    GetErrorReporter()->Report(pos, ErrorMessages::kIllegalTypesForBinary, op, left->GetType(), right->GetType());
+    return {nullptr, left, right};
+  }
+
+  auto build_ret_type = [this](ast::Type *input_type) {
+    if (input_type->IsSqlValueType()) {
+      return ast::BuiltinType::Get(GetContext(), ast::BuiltinType::Boolean);
+    }
+    return ast::BuiltinType::Get(GetContext(), ast::BuiltinType::Bool);
+  };
+
+  return {build_ret_type(left->GetType()), left, right};
+}
+
 bool Sema::CheckAssignmentConstraints(ast::Type *target_type, ast::Expr **expr) {
   auto expr_type = (*expr)->GetType();
 
